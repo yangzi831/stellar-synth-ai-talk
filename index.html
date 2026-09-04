@@ -30,20 +30,22 @@
     button{cursor:pointer}
     #space{
       position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;
-      background:linear-gradient(180deg,#02050b 0%,#06101d 48%,#02050b 100%);
+      background:
+        radial-gradient(ellipse at 50% 48%,rgba(15,31,53,.82),transparent 62%),
+        linear-gradient(180deg,#01040a 0%,#050d19 48%,#01040a 100%);
     }
-    .aurora{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;opacity:.68}
+    .aurora{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;opacity:.55}
     .aurora::before,.aurora::after{
       content:"";position:absolute;left:-15%;width:130%;height:48%;filter:blur(70px);
       transform-origin:center;mix-blend-mode:screen;
     }
     .aurora::before{
-      top:-14%;
+      top:-19%;
       background:
         radial-gradient(ellipse at 18% 55%,rgba(45,222,255,.22),transparent 30%),
         radial-gradient(ellipse at 52% 25%,rgba(137,112,255,.22),transparent 33%),
         radial-gradient(ellipse at 83% 50%,rgba(62,255,196,.12),transparent 28%);
-      animation:auroraA 18s ease-in-out infinite alternate;
+      animation:auroraA 24s ease-in-out infinite alternate;
     }
     .aurora::after{
       bottom:-22%;
@@ -51,7 +53,7 @@
         radial-gradient(ellipse at 22% 38%,rgba(72,119,255,.16),transparent 28%),
         radial-gradient(ellipse at 65% 55%,rgba(137,80,255,.16),transparent 33%),
         radial-gradient(ellipse at 88% 30%,rgba(59,224,255,.12),transparent 25%);
-      animation:auroraB 22s ease-in-out infinite alternate;
+      animation:auroraB 29s ease-in-out infinite alternate;
     }
     @keyframes auroraA{to{transform:translate3d(5%,8%,0) skewX(-7deg) scale(1.08);opacity:.76}}
     @keyframes auroraB{to{transform:translate3d(-7%,-5%,0) skewX(8deg) scale(1.1);opacity:.62}}
@@ -329,7 +331,51 @@
     document.querySelectorAll('[data-stellar-url]').forEach(btn=>btn.addEventListener('click',()=>{const url=btn.dataset.stellarUrl;document.getElementById('stellarFrame').src=url;document.getElementById('stellarOpen').href=url;document.querySelectorAll('[data-stellar-url]').forEach(x=>x.classList.toggle('active',x===btn))}));
     document.querySelectorAll('[data-demo-url]').forEach(btn=>btn.addEventListener('click',()=>{const url=btn.dataset.demoUrl;document.getElementById('demoFrame').src=url;document.getElementById('demoOpen').href=url;document.querySelectorAll('[data-demo-url]').forEach(x=>x.classList.toggle('active',x===btn))}));
     let timerOn=false,timerLeft=300,timerHandle=null;const timerEl=document.getElementById('timer');function renderTimer(){timerEl.textContent=`${String(Math.floor(timerLeft/60)).padStart(2,'0')}:${String(timerLeft%60).padStart(2,'0')}`}function toggleTimer(){timerOn=!timerOn;if(timerOn){timerHandle=setInterval(()=>{timerLeft=Math.max(0,timerLeft-1);renderTimer();if(timerLeft===0){clearInterval(timerHandle);timerOn=false}},1000)}else clearInterval(timerHandle)}timerEl.onclick=toggleTimer;renderTimer();
-    const canvas=document.getElementById('space'),ctx=canvas.getContext('2d');let stars=[],w=0,h=0,dpr=1;function resize(){dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0);stars=Array.from({length:Math.floor(w*h/8500)},()=>({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.25+.2,a:Math.random()*.7+.18,v:Math.random()*.06+.015,p:Math.random()*Math.PI*2}))}function draw(t){ctx.clearRect(0,0,w,h);for(const s of stars){s.y-=s.v;if(s.y<-3)s.y=h+3;const a=s.a*(.68+.32*Math.sin(t*.0008+s.p));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(213,239,255,${a})`;ctx.fill()}requestAnimationFrame(draw)}addEventListener('resize',resize);resize();requestAnimationFrame(draw);
+    const canvas=document.getElementById('space'),ctx=canvas.getContext('2d');
+    let particles=[],nodes=[],w=0,h=0,dpr=1,pointer={x:.5,y:.5};
+    const rand=(a,b)=>a+Math.random()*(b-a);
+    function makeParticle(){return{x:Math.random()*w,y:Math.random()*h,px:0,py:0,z:Math.random(),r:rand(.18,1.05),a:rand(.12,.72),phase:Math.random()*Math.PI*2,speed:rand(.12,.42)}}
+    function resize(){
+      dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;
+      canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0);
+      const amount=Math.min(760,Math.max(260,Math.round(w*h/3100)));
+      particles=Array.from({length:amount},makeParticle);
+      nodes=Array.from({length:Math.min(92,Math.max(45,Math.round(w*h/22000)))},()=>({x:Math.random()*w,y:Math.random()*h,phase:Math.random()*Math.PI*2,r:rand(.42,1.15),a:rand(.24,.72)}));
+    }
+    function wrap(p){if(p.x<-16){p.x=w+16;p.px=p.x}if(p.x>w+16){p.x=-16;p.px=p.x}if(p.y<-16){p.y=h+16;p.py=p.y}if(p.y>h+16){p.y=-16;p.py=p.y}}
+    function draw(t){
+      const time=t*.00012;ctx.clearRect(0,0,w,h);ctx.globalCompositeOperation='screen';
+      const cx=w*(.5+(pointer.x-.5)*.035),cy=h*(.5+(pointer.y-.5)*.035);
+      for(const p of particles){
+        p.px=p.x;p.py=p.y;
+        const nx=p.x/w-.5,ny=p.y/h-.5;
+        const field=Math.sin(ny*7.2+time*5+p.phase)*.42+Math.cos(nx*8.5-time*3.1)*.34;
+        const orbit=Math.atan2(p.y-cy,p.x-cx)+Math.PI/2;
+        const drift=.18+p.z*.34;
+        p.x+=Math.cos(field+orbit*.18)*p.speed+Math.cos(orbit)*drift*.22;
+        p.y+=Math.sin(field*.92)*p.speed*.72+Math.sin(orbit)*drift*.13-.035;
+        wrap(p);
+        const pulse=.72+.28*Math.sin(time*9+p.phase),alpha=p.a*pulse*(.45+p.z*.55);
+        ctx.strokeStyle=`rgba(126,213,255,${alpha*.13})`;ctx.lineWidth=.42+p.z*.42;ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(p.x,p.y);ctx.stroke();
+        ctx.fillStyle=`rgba(229,247,255,${alpha})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r*(.5+p.z*.85),0,Math.PI*2);ctx.fill();
+      }
+      for(const n of nodes){
+        n.x+=Math.sin(time*3+n.phase)*.055;n.y+=Math.cos(time*2.4+n.phase)*.04;wrap(n);
+        const glow=n.a*(.68+.32*Math.sin(time*7+n.phase));
+        ctx.fillStyle=`rgba(244,252,255,${glow})`;ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fill();
+      }
+      ctx.lineWidth=.48;
+      for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+        const a=nodes[i],b=nodes[j],dx=a.x-b.x,dy=a.y-b.y,dist=Math.hypot(dx,dy),limit=Math.min(145,w*.12);
+        if(dist<limit){const fade=(1-dist/limit)*.115;ctx.strokeStyle=`rgba(128,207,255,${fade})`;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+      }
+      const sweepX=(time*94%(w+500))-250,grad=ctx.createLinearGradient(sweepX-170,0,sweepX+170,h);
+      grad.addColorStop(0,'rgba(111,205,255,0)');grad.addColorStop(.5,'rgba(150,224,255,.035)');grad.addColorStop(1,'rgba(125,112,255,0)');
+      ctx.strokeStyle=grad;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(sweepX-190,h);ctx.bezierCurveTo(sweepX+70,h*.72,sweepX-70,h*.28,sweepX+190,0);ctx.stroke();
+      ctx.globalCompositeOperation='source-over';requestAnimationFrame(draw);
+    }
+    addEventListener('pointermove',e=>{pointer.x=e.clientX/innerWidth;pointer.y=e.clientY/innerHeight},{passive:true});
+    addEventListener('resize',resize);resize();requestAnimationFrame(draw);
   </script>
 </body>
 </html>
