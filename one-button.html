@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>AV Instrument — One Button</title>
+<style>
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050505;color:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+  #button{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(24vw,190px);aspect-ratio:1;border-radius:50%;
+    border:1px solid rgba(255,255,255,.65);background:rgba(255,255,255,.025);
+    box-shadow:0 0 0 1px rgba(255,255,255,.06) inset,0 0 60px rgba(255,255,255,.03);
+    backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+    cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;
+  }
+  #button:active{background:rgba(255,255,255,.07)}
+  #hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);opacity:.22;font-size:11px;letter-spacing:.14em;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="button" role="button" tabindex="0" aria-label="按下并持续以演奏音画乐器"></div>
+<div id="hint">TAP / PRESS / HOLD / RELEASE</div>
+<script>
+(() => {
+  // ---------------------- shared transport/state ----------------------
+  const state = {
+    BPM: 148,
+    beat: 0,
+    bar: 0,
+    step: 0,
+    energy: 0.05,
+    scene: 'idle',
+    holdDuration: 0,
+    releaseAmount: 0,
+    patternVariant: 0,
+    pressed: false,
+    lastInputAt: performance.now(),
+    pulse: 0,
+    opening: 0,
+    transient: 0,
+    residue: 0,
+  };
+
+  const STEP_DIV = 4; // 16th notes
+  const beatSec = () => 60 / state.BPM;
+  const stepSec = () => beatSec() / STEP_DIV;
+
+  // ----------------------------- audio -------------------------------
+  let AC, master, dryBus, delay, delayFb, wetDelay, convolver, wetVerb, ambience;
+  let transportTimer = null;
+  let transportStart = 0;
+  let nextStepTime = 0;
+  let scheduledStep = 0;
+  let holdVoice = null;
+  let arpGate = false;
+  let audioReady = false;
+
+  function makeImpulse(ctx, seconds=2.4, decay=3.2){
+    const n = Math.floor(ctx.sampleRate * seconds);
+    const b = ctx.createBuffer(2,n,ctx.sampleRate);
+    for(let ch=0; ch<2; ch++){
+      const d = b.getChannelData(ch);
+      for(let i=0;i<n;i++) d[i] = (Math.random()*2-1)*Math.pow(1-i/n,decay);
+    }
+    return b;
+  }
+
+  async function initAudio(){
+    if(audioReady){ if(AC.state !== 'running') await AC.resume(); return; }
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+
+    master = AC.createGain(); master.gain.value = 0.62;
+    dryBus = AC.createGain(); dryBus.gain.value = 1;
+    dryBus.connect(master);
+
+    delay = AC.createDelay(2); delay.delayTime.value = beatSec() * 0.75;
+    delayFb = AC.createGain(); delayFb.gain.value = 0.34;
+    wetDelay = AC.createGain(); wetDelay.gain.value = 0.22;
+    delay.connect(delayFb).connect(delay); delay.connect(wetDelay).connect(master);
+
+    convolver = AC.createConvolver(); convolver.buffer = makeImpulse(AC);
+    wetVerb = AC.createGain(); wetVerb.gain.value = 0.16;
+    convolver.connect(wetVerb).connect(master);
+
+    master.connect(AC.destination);
+
+    // gentle idle ambience, always present after first interaction
+    ambience = AC.createGain(); ambience.gain.value = 0.0001;
+    const o1 = AC.createOscillator(), o2 = AC.createOscillator();
+    const f = AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=900; f.Q.value=.2;
+    o1.type='sine'; o2.type='triangle'; o1.frequency.value=55; o2.frequency.value=82.4;
+    o1.detune.value=-7; o2.detune.value=5;
+    const g1=AC.createGain(),g2=AC.createGain(); g1.gain.value=.05;g2.gain.value=.018;
+    o1.connect(g1).connect(f);o2.connect(g2).connect(f);f.connect(ambience);ambience.connect(dryBus); ambience.connect(convolver);
+    o1.start();o2.start();
+    ambience.gain.exponentialRampToValueAtTime(.035, AC.currentTime + 1.2);
+
+    transportStart = AC.currentTime + 0.05;
+    nextStepTime = transportStart;
+    scheduledStep = 0;
+    transportTimer = setInterval(scheduler, 25);
+    audioReady = true;
+    await AC.resume();
+  }
+
+  function route(node, sendDelay=.14, sendVerb=.12){
+    node.connect(dryBus);
+    const sd=AC.createGain(), sv=AC.createGain(); sd.gain.value=sendDelay; sv.gain.value=sendVerb;
+    node.connect(sd).connect(delay); node.connect(sv).connect(convolver);
+  }
+
+  function oscEnv({time=AC.currentTime,freq=220,freq2=null,type='sine',dur=.12,attack=.004,release=.08,gain=.1,detune=0,sendDelay=.1,sendVerb=.08,filter=0}){
+    const o=AC.createOscillator(), g=AC.createGain(); o.type=type; o.frequency.setValueAtTime(freq,time); o.detune.value=detune;
+    if(freq2) o.frequency.exponentialRampToValueAtTime(freq2,time+dur);
+    g.gain.setValueAtTime(.0001,time); g.gain.exponentialRampToValueAtTime(Math.max(.0002,gain),time+attack);
+    g.gain.exponentialRampToValueAtTime(.0001,time+dur+release);
+    if(filter){ const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=filter; o.connect(f).connect(g); }
+    else o.connect(g);
+    route(g,sendDelay,sendVerb); o.start(time); o.stop(time+dur+release+.05);
+  }
+
+  function noiseBurst(time=AC.currentTime,dur=.05,gain=.05,cut=7000){
+    const n=Math.max(1,Math.floor(AC.sampleRate*dur)); const b=AC.createBuffer(1,n,AC.sampleRate); const d=b.getChannelData(0);
+    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+    const s=AC.createBufferSource();s.buffer=b; const f=AC.createBiquadFilter(); f.type='bandpass';f.frequency.value=cut;f.Q.value=1.4;
+    const g=AC.createGain();g.gain.setValueAtTime(.0001,time);g.gain.exponentialRampToValueAtTime(gain,time+.003);g.gain.exponentialRampToValueAtTime(.0001,time+dur);
+    s.connect(f).connect(g);route(g,.08,.03);s.start(time);
+  }
+
+  function tapSound(){
+    const t=AC.currentTime;
+    oscEnv({time:t,freq:1120,freq2:170,type:'sine',dur:.035,release:.075,gain:.18,sendDelay:.08,sendVerb:.025});
+    noiseBurst(t,.028,.045,5200);
+  }
+
+  function openingPhrase(){
+    const t=AC.currentTime;
+    const root=[110,123.47,146.83][state.patternVariant%3];
+    [0, .5, 1.0].forEach((n,i)=>{
+      const tt=t+i*stepSec()*1.6;
+      oscEnv({time:tt,freq:root*Math.pow(2,[0,7,12][i]/12),type:i===0?'triangle':'sine',dur:.16,release:.24,gain:.075+i*.012,sendDelay:.18,sendVerb:.20,filter:2400});
+    });
+  }
+
+  function startHoldVoice(){
+    if(holdVoice) return;
+    const t=AC.currentTime;
+    const g=AC.createGain();g.gain.value=.0001;
+    const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=720;f.Q.value=1.7;
+    const os=[];
+    [55,82.41,110].forEach((fq,i)=>{const o=AC.createOscillator();o.type=i===1?'sawtooth':'triangle';o.frequency.value=fq;o.detune.value=(i-1)*5;o.connect(f);o.start(t);os.push(o)});
+    f.connect(g);route(g,.26,.24);g.gain.exponentialRampToValueAtTime(.055,t+.28);
+    holdVoice={g,f,os}; arpGate=true;
+  }
+
+  function stopHoldVoice(){
+    arpGate=false;
+    if(!holdVoice) return;
+    const t=AC.currentTime; holdVoice.g.gain.cancelScheduledValues(t);holdVoice.g.gain.setValueAtTime(Math.max(.0001,holdVoice.g.gain.value),t);holdVoice.g.gain.exponentialRampToValueAtTime(.0001,t+.75);
+    holdVoice.os.forEach(o=>o.stop(t+.85)); holdVoice=null;
+  }
+
+  function releasePhrase(){
+    const t=AC.currentTime;
+    const base=[196,174.61,220,146.83][state.patternVariant%4];
+    [0,3,7,10].forEach((semi,i)=>oscEnv({time:t+i*stepSec()*1.15,freq:base*Math.pow(2,semi/12),type:'sine',dur:.10,release:.55+i*.08,gain:.055,sendDelay:.42,sendVerb:.32,filter:1800}));
+  }
+
+  const patterns=[
+    [0,null,7,null,3,10,null,7, 0,null,12,null,10,7,3,null],
+    [0,7,null,3,10,null,7,null, 12,null,10,3,null,7,5,null],
+    [0,null,3,7,null,10,5,null, 0,12,null,7,3,null,10,null],
+    [0,10,7,null,3,null,12,null, 0,null,5,7,null,10,3,null]
+  ];
+
+  function scheduleHoldStep(step,time){
+    if(!arpGate || state.scene!=='hold') return;
+    const p=patterns[state.patternVariant%patterns.length]; const semi=p[step%16];
+    if(semi==null) return;
+    const root=[110,98,123.47][state.patternVariant%3];
+    const accent=(step%4===0)?1.22:1;
+    oscEnv({time,freq:root*Math.pow(2,semi/12),type:(step%8===0?'triangle':'sine'),dur:.045,release:.09,gain:.038*accent,sendDelay:.2,sendVerb:.13,filter:3200});
+    if(step%4===0) oscEnv({time,freq:55,freq2:45,type:'sine',dur:.06,release:.12,gain:.04,sendDelay:.03,sendVerb:.02});
+  }
+
+  function scheduler(){
+    if(!audioReady) return;
+    while(nextStepTime < AC.currentTime + .12){
+      const globalStep=scheduledStep;
+      const s=globalStep%16;
+      if(globalStep%16===0 && globalStep>0 && (Math.floor(globalStep/16)%2===0)){
+        // controlled mutation every two bars
+        if(state.scene==='hold') state.patternVariant=(state.patternVariant + (Math.random()<.72?1:2))%patterns.length;
+      }
+      scheduleHoldStep(s,nextStepTime);
+      scheduledStep++;
+      nextStepTime += stepSec();
+    }
+  }
+
+  // ---------------------------- gesture -------------------------------
+  const button=document.getElementById('button');
+  let downAt=0, holdTimer=null, openingTimer=null, isHolding=false, openingStarted=false;
+
+  async function press(e){
+    e.preventDefault(); await initAudio();
+    state.pressed=true; state.scene='press'; state.releaseAmount=0; state.lastInputAt=performance.now();
+    state.energy=Math.max(state.energy,.28);
+    downAt=performance.now(); isHolding=false; openingStarted=false;
+    clearTimeout(openingTimer);
+    openingTimer=setTimeout(()=>{
+      if(!state.pressed) return;
+      openingStarted=true; state.opening=1; state.energy=.46; openingPhrase();
+    },130);
+    clearTimeout(holdTimer);
+    holdTimer=setTimeout(()=>{
+      if(!state.pressed) return;
+      isHolding=true; state.scene='hold'; state.energy=.78; state.holdDuration=(performance.now()-downAt)/1000; startHoldVoice();
+    },350);
+  }
+
+  function release(e){
+    e.preventDefault(); if(!state.pressed) return;
+    clearTimeout(holdTimer); clearTimeout(openingTimer);
+    const dur=(performance.now()-downAt)/1000;
+    state.pressed=false; state.holdDuration=dur; state.lastInputAt=performance.now();
+    if(dur < .22){
+      state.scene='tap'; state.transient=1; state.energy=.72; tapSound();
+      setTimeout(()=>{ if(!state.pressed) state.scene='release'; },100);
+    } else {
+      state.scene='release'; state.energy=.48;
+    }
+    if(isHolding) stopHoldVoice();
+    releasePhrase(); state.releaseAmount=1; state.residue=1;
+  }
+
+  button.addEventListener('pointerdown',press);
+  window.addEventListener('pointerup',release);
+  window.addEventListener('pointercancel',release);
+  window.addEventListener('blur',()=>{ if(state.pressed) release(new Event('x')); });
+  window.addEventListener('keydown',(e)=>{
+    if(e.code==='Space' && !e.repeat && !state.pressed) press(e);
+  });
+  window.addEventListener('keyup',(e)=>{
+    if(e.code==='Space' && state.pressed) release(e);
+  });
+  window.addEventListener('message',(e)=>{
+    if(e.data==='instrument-down' && !state.pressed) press({preventDefault(){}});
+    if(e.data==='instrument-up' && state.pressed) release({preventDefault(){}});
+  });
+
+  // ---------------------------- visual --------------------------------
+  const canvas=document.getElementById('c'); const ctx=canvas.getContext('2d');
+  let W=0,H=0,DPR=1;
+  function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
+  addEventListener('resize',resize);resize();
+
+  const particles=Array.from({length:130},(_,i)=>({a:Math.random()*Math.PI*2,r:20+Math.random()*Math.min(W,H)*.46,z:Math.random(),v:(Math.random()*.4+.08)*(Math.random()<.5?-1:1),j:Math.random()*20}));
+
+  function line(x1,y1,x2,y2,a=.5,w=1){ctx.globalAlpha=a;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
+
+  function draw(now){
+    const t=now/1000;
+    // transport derived visually from wall clock until audio starts
+    const tr=audioReady?(AC.currentTime-transportStart):t;
+    const beatFloat=Math.max(0,tr/beatSec());
+    state.beat=Math.floor(beatFloat)%4; state.bar=Math.floor(beatFloat/4); state.step=Math.floor(beatFloat*STEP_DIV)%16;
+    state.pulse=Math.pow(1-(beatFloat%1),4);
+
+    if(state.pressed) state.holdDuration=(now-downAt)/1000;
+    const idleFor=(now-state.lastInputAt)/1000;
+    if(!state.pressed && state.scene!=='tap'){
+      state.releaseAmount*=.965; state.residue*=.982;
+      state.energy += ((idleFor>2.5?.055:.16)-state.energy)*.018;
+      if(idleFor>3.2) state.scene='idle';
+    }
+    state.transient*=.84;state.opening*=.95;
+
+    ctx.globalCompositeOperation='source-over';
+    ctx.fillStyle=`rgba(5,5,5,${state.scene==='hold'?.14:.24})`;ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='#fff';ctx.fillStyle='#fff';
+
+    const cx=W/2, cy=H/2;
+    const min=Math.min(W,H);
+    const pulse=state.pulse;
+    const e=state.energy;
+    const scene=state.scene;
+
+    // shared beat skeleton
+    ctx.save();ctx.translate(cx,cy);ctx.rotate((state.bar%8)*Math.PI/32 + t*.02);
+    const sides=scene==='hold'?8:scene==='press'?6:4;
+    const rr=min*(.15 + e*.15 + pulse*.008);
+    ctx.globalAlpha=.18 + e*.2;ctx.lineWidth=1;
+    ctx.beginPath();
+    for(let i=0;i<=sides;i++){
+      const a=i/sides*Math.PI*2;const r=rr*(1+Math.sin(t*.8+i+state.patternVariant)*.045);
+      const x=Math.cos(a)*r,y=Math.sin(a)*r;i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    }ctx.stroke();ctx.restore();
+
+    // persistent point memory field
+    for(let i=0;i<particles.length;i++){
+      const p=particles[i];
+      const holdSpin=scene==='hold'?(1+state.holdDuration*.025):1;
+      p.a += p.v*.0014*holdSpin;
+      const mod=1+Math.sin(t*.55+p.j+state.patternVariant*.9)*(.03+.08*e);
+      const rad=p.r*mod*(.78+.38*p.z);
+      const x=cx+Math.cos(p.a+t*.02*p.v)*rad;
+      const y=cy+Math.sin(p.a+t*.02*p.v)*rad*.62;
+      const alpha=.045 + p.z*.11 + state.residue*.08;
+      ctx.globalAlpha=alpha;ctx.fillRect(x,y,1,1);
+      if(scene==='hold' && i%7===0){
+        const q=particles[(i+17+state.patternVariant*3)%particles.length];
+        const qr=q.r*(1+Math.sin(t*.5+q.j)*.04)*(.78+.38*q.z);
+        const qx=cx+Math.cos(q.a+t*.02*q.v)*qr; const qy=cy+Math.sin(q.a+t*.02*q.v)*qr*.62;
+        line(x,y,qx,qy,.025+e*.035,.6);
+      }
+    }
+
+    // scene specific gestures
+    if(scene==='tap'){
+      const r=min*(.08 + state.transient*.32);
+      ctx.globalAlpha=state.transient*.9;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+      for(let i=0;i<12;i++){
+        const a=i/12*Math.PI*2;line(cx+Math.cos(a)*r*.25,cy+Math.sin(a)*r*.25,cx+Math.cos(a)*r,cy+Math.sin(a)*r,state.transient*.4,1);
+      }
+    }
+
+    if(scene==='press'){
+      const k=1-state.opening;
+      for(let j=0;j<4;j++){
+        const r=min*(.07+j*.045+k*.12);ctx.globalAlpha=.14+(3-j)*.05;ctx.beginPath();ctx.arc(cx,cy,r, -Math.PI*.9+k*.4+j*.15, Math.PI*.25+k*3.1);ctx.stroke();
+      }
+    }
+
+    if(scene==='hold'){
+      const step=state.step; const varr=state.patternVariant;
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(t*.11 + varr*.3);
+      const rings=3+varr;
+      for(let j=0;j<rings;j++){
+        const r=min*(.12+j*.045+Math.sin(t*.9+j)*.004);
+        ctx.globalAlpha=.08+.06*((step+j)%4===0);ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
+        const nodes=8+j*2;
+        for(let i=0;i<nodes;i++){
+          const a=i/nodes*Math.PI*2 + j*.13;
+          const active=((i+j*2)%16)===step;
+          const x=Math.cos(a)*r,y=Math.sin(a)*r;
+          ctx.globalAlpha=active?.8:.12;ctx.fillRect(x-1,y-1,active?3:1,active?3:1);
+        }
+      }
+      ctx.restore();
+    }
+
+    if(scene==='release' || state.residue>.03){
+      const k=state.releaseAmount;
+      for(let j=0;j<6;j++){
+        const a=t*.16+j*1.04+state.patternVariant;
+        const len=min*(.09+j*.055)*(1+(1-k)*.35);
+        const ox=Math.cos(a)*len*.7, oy=Math.sin(a)*len*.42;
+        line(cx+ox,cy+oy,cx+ox*1.65,cy+oy*1.65,(.03+j*.012)*Math.max(state.residue,.2),.8);
+      }
+    }
+
+    // central pulse, same state as sound transport
+    const cr=min*(.018 + e*.022 + pulse*.005);
+    ctx.globalAlpha=.3+.45*e;ctx.beginPath();ctx.arc(cx,cy,cr,0,Math.PI*2);ctx.stroke();
+
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
