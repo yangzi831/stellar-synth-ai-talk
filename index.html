@@ -31,34 +31,41 @@
     #space{
       position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;
       background:
-        radial-gradient(ellipse at 18% 22%,rgba(39,54,151,.22),transparent 42%),
-        radial-gradient(ellipse at 78% 62%,rgba(91,42,175,.21),transparent 45%),
-        radial-gradient(ellipse at 48% 48%,rgba(12,31,69,.9),transparent 64%),
-        linear-gradient(155deg,#01030a 0%,#07122b 46%,#0d0822 72%,#01030a 100%);
+        radial-gradient(ellipse at 45% 42%,rgba(105,145,210,.16),transparent 58%),
+        radial-gradient(ellipse at 78% 66%,rgba(69,79,144,.17),transparent 52%),
+        linear-gradient(158deg,#0b1224 0%,#101a34 42%,#121b38 67%,#090f20 100%);
     }
-    .aurora{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;opacity:.8}
+    .aurora{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;opacity:.92}
     .aurora::before,.aurora::after{
-      content:"";position:absolute;left:-15%;width:130%;height:48%;filter:blur(70px);
-      transform-origin:center;mix-blend-mode:screen;
+      content:"";position:absolute;transform-origin:center;mix-blend-mode:screen;
+      border-radius:48%;filter:blur(105px);will-change:transform;
     }
     .aurora::before{
-      top:-19%;
-      background:
-        radial-gradient(ellipse at 13% 58%,rgba(58,167,255,.27),transparent 29%),
-        radial-gradient(ellipse at 47% 21%,rgba(99,86,255,.3),transparent 35%),
-        radial-gradient(ellipse at 83% 46%,rgba(183,79,255,.22),transparent 31%);
-      animation:auroraA 17s ease-in-out infinite alternate;
+      width:118%;height:72%;left:-15%;top:-22%;
+      background:conic-gradient(from 222deg at 48% 52%,
+        rgba(78,96,162,0) 0deg,
+        rgba(116,156,220,.3) 46deg,
+        rgba(113,173,220,.2) 92deg,
+        rgba(111,126,194,.3) 142deg,
+        rgba(88,77,157,.18) 195deg,
+        rgba(78,96,162,0) 258deg);
+      transform:rotate(-8deg) scale(1.12,.68);
+      animation:auroraA 20s ease-in-out infinite alternate;
     }
     .aurora::after{
-      bottom:-22%;
-      background:
-        radial-gradient(ellipse at 18% 41%,rgba(48,116,255,.23),transparent 30%),
-        radial-gradient(ellipse at 60% 58%,rgba(123,60,255,.25),transparent 35%),
-        radial-gradient(ellipse at 91% 28%,rgba(58,173,255,.18),transparent 27%);
-      animation:auroraB 21s ease-in-out infinite alternate;
+      width:108%;height:78%;left:8%;bottom:-34%;
+      background:conic-gradient(from 36deg at 45% 46%,
+        rgba(71,95,157,0) 0deg,
+        rgba(90,139,207,.24) 52deg,
+        rgba(91,163,213,.15) 104deg,
+        rgba(92,109,180,.27) 158deg,
+        rgba(77,65,137,.18) 220deg,
+        rgba(71,95,157,0) 286deg);
+      transform:rotate(12deg) scale(1.18,.72);
+      animation:auroraB 25s ease-in-out infinite alternate;
     }
-    @keyframes auroraA{to{transform:translate3d(5%,8%,0) skewX(-7deg) scale(1.08);opacity:.76}}
-    @keyframes auroraB{to{transform:translate3d(-7%,-5%,0) skewX(8deg) scale(1.1);opacity:.62}}
+    @keyframes auroraA{to{transform:translate3d(6%,10%,0) rotate(7deg) scale(1.2,.78);opacity:.76}}
+    @keyframes auroraB{to{transform:translate3d(-9%,-7%,0) rotate(-5deg) scale(1.25,.82);opacity:.68}}
     .grain{
       position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.025;
       background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitchTiles'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -358,21 +365,21 @@
         p.y+=(Math.sin(field*.92)*p.speed*.76+Math.sin(orbit)*drift*.16-.04)*motion;
         wrap(p);
         const pulse=.72+.28*Math.sin(time*9+p.phase),alpha=p.a*pulse*(.45+p.z*.55);
-        ctx.strokeStyle=p.fast?`rgba(164,174,255,${alpha*.27})`:`rgba(116,190,255,${alpha*.16})`;ctx.lineWidth=.38+p.z*.5;ctx.beginPath();ctx.moveTo(p.fast?p.px-(p.x-p.px)*1.8:p.px,p.fast?p.py-(p.y-p.py)*1.8:p.py);ctx.lineTo(p.x,p.y);ctx.stroke();
-        ctx.fillStyle=`rgba(229,247,255,${alpha})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r*(.5+p.z*.85),0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle=p.fast?`rgba(181,196,239,${alpha*.25})`:`rgba(153,188,230,${alpha*.15})`;ctx.lineWidth=.38+p.z*.5;ctx.beginPath();ctx.moveTo(p.fast?p.px-(p.x-p.px)*1.8:p.px,p.fast?p.py-(p.y-p.py)*1.8:p.py);ctx.lineTo(p.x,p.y);ctx.stroke();
+        ctx.fillStyle=`rgba(231,239,252,${alpha})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r*(.5+p.z*.85),0,Math.PI*2);ctx.fill();
       }
       for(const n of nodes){
         n.x+=Math.sin(time*3+n.phase)*.055;n.y+=Math.cos(time*2.4+n.phase)*.04;wrap(n);
         const glow=n.a*(.68+.32*Math.sin(time*7+n.phase));
-        ctx.fillStyle=`rgba(244,252,255,${glow})`;ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle=`rgba(238,243,252,${glow})`;ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fill();
       }
       ctx.lineWidth=.48;
       for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
         const a=nodes[i],b=nodes[j],dx=a.x-b.x,dy=a.y-b.y,dist=Math.hypot(dx,dy),limit=Math.min(145,w*.12);
-        if(dist<limit){const fade=(1-dist/limit)*.14;ctx.strokeStyle=`rgba(151,174,255,${fade})`;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+        if(dist<limit){const fade=(1-dist/limit)*.13;ctx.strokeStyle=`rgba(159,181,225,${fade})`;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
       }
       const sweepX=(time*94%(w+500))-250,grad=ctx.createLinearGradient(sweepX-170,0,sweepX+170,h);
-      grad.addColorStop(0,'rgba(111,205,255,0)');grad.addColorStop(.5,'rgba(150,224,255,.035)');grad.addColorStop(1,'rgba(125,112,255,0)');
+      grad.addColorStop(0,'rgba(131,171,221,0)');grad.addColorStop(.5,'rgba(161,192,229,.035)');grad.addColorStop(1,'rgba(116,111,181,0)');
       ctx.strokeStyle=grad;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(sweepX-190,h);ctx.bezierCurveTo(sweepX+70,h*.72,sweepX-70,h*.28,sweepX+190,0);ctx.stroke();
       ctx.globalCompositeOperation='source-over';requestAnimationFrame(draw);
     }
