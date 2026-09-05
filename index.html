@@ -169,6 +169,12 @@
     .single-video-stage video{display:block;width:100%;max-height:68vh;aspect-ratio:2/1;object-fit:contain;border-radius:15px;background:#02040a}
     .single-video-copy{padding:28px}
     .single-video-copy p{font-size:15px;line-height:1.85}
+    .installation-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
+    .installation-figure{margin:0;overflow:hidden;padding:8px}
+    .installation-figure img{display:block;width:100%;height:min(43vh,430px);object-fit:cover;border-radius:15px;background:#02040a}
+    .installation-figure figcaption{padding:13px 12px 9px;color:#bdc9d7;font-size:14px;line-height:1.6}
+    .mapping-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .mapping-row span{padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(7,14,25,.58);color:#d5dfeb;font-size:14px}
     .lab-layout{display:grid;grid-template-columns:285px minmax(0,1fr);gap:20px;align-items:stretch}
     .lab-nav{padding:14px;display:flex;flex-direction:column;gap:7px}
     .lab-item{border:0;border-radius:11px;background:transparent;padding:14px;text-align:left;color:#aebdcd;line-height:1.45}
@@ -197,7 +203,7 @@
       h1{font-size:35px}h2{font-size:28px}.lead{font-size:17px}.intro-grid{gap:26px}.intro-visual{height:300px}
       .case-grid{gap:20px}.demo-frame{min-height:440px}.demo-frame iframe{min-height:424px}.prompt-box{padding:22px;max-height:none}
       .spec-table th,.spec-table td{display:block;width:100%;padding:14px 17px}.spec-table th{border-bottom:0;padding-bottom:3px}
-      .video-grid{grid-template-columns:1fr}.single-video-copy{padding:22px}.lab-nav{grid-template-columns:1fr}.dots{display:none}.live-stage iframe{height:460px}.lab-stage iframe{height:480px}
+      .video-grid,.installation-grid{grid-template-columns:1fr}.installation-figure img{height:auto;aspect-ratio:4/3}.single-video-copy{padding:22px}.lab-nav{grid-template-columns:1fr}.dots{display:none}.live-stage iframe{height:460px}.lab-stage iframe{height:480px}
     }
     @media(prefers-reduced-motion:reduce){.aurora::before,.aurora::after,.orbit{animation:none}.slide.active{animation:none}}
   </style>
@@ -206,16 +212,16 @@
   <canvas id="space" aria-hidden="true"></canvas><div class="aurora" aria-hidden="true"></div><div class="grain" aria-hidden="true"></div>
   <header class="topbar">
     <div class="brand"><i></i>小翅膀 <span>音画网页原型案例分享</span></div>
-    <div class="top-right"><span id="count">01 / 09</span><button class="timer" id="timer" type="button" aria-label="开始五分钟计时">05:00</button></div>
+    <div class="top-right"><span id="count">01 / 10</span><button class="timer" id="timer" type="button" aria-label="开始五分钟计时">05:00</button></div>
   </header>
   <div class="progress" id="progress"></div>
   <main>
-    <section class="slide active" data-note="我平时做设计，也弹键盘和合成器。脑子里经常会出现一些声音和画面一起变化的想法，但如果每次都先搭一个完整工程，很多想法还没被验证就放下了。所以这次分享的是我怎样先把它做成一个浏览器里能玩的版本。">
+    <section class="slide active" data-order="1" data-note="我平时做设计，也弹键盘和合成器。脑子里经常会出现一些声音和画面一起变化的想法，但如果每次都先搭一个完整工程，很多想法还没被验证就放下了。所以这次分享的是我怎样先把它做成一个浏览器里能玩的版本。">
       <div class="inner intro-grid">
         <div>
           <p class="eyebrow">CASE SHARING · 5 MIN</p>
           <h1>用 AI Coding 做音画网页原型</h1>
-          <p class="lead">两个实际案例：一个按钮音画练习，以及后来继续做下去的 Stellar Synth 星宿合成器。</p>
+          <p class="lead">从最早的音画实验、一个按钮原型，到星宿合成器、实时 VJ 和声音灯光装置。</p>
           <p>小翅膀｜UI／产品设计师、键盘与合成器手<br>最近在做浏览器音画乐器和互动数字艺术。</p>
           <div class="intro-meta"><span class="chip">Web Audio</span><span class="chip">Tone.js</span><span class="chip">Canvas / WebGL</span><span class="chip">GitHub Pages</span></div>
         </div>
@@ -226,7 +232,7 @@
       </div>
     </section>
 
-    <section class="slide" data-note="第一个练习只有一个输入。我先试短按、按下、长按和松开是不是能形成不一样的时间过程。现场可以直接点右边，或者按住 Space。真正试玩以后，我才知道长按会不会无聊、松开有没有尾巴。">
+    <section class="slide" data-order="3" data-note="第一个练习只有一个输入。我先试短按、按下、长按和松开是不是能形成不一样的时间过程。现场可以直接点右边，或者按住 Space。真正试玩以后，我才知道长按会不会无聊、松开有没有尾巴。">
       <div class="inner">
         <p class="eyebrow">CASE 01</p><h2>一个按钮的音画练习</h2>
         <div class="case-grid">
@@ -245,7 +251,7 @@
       </div>
     </section>
 
-    <section class="slide" data-note="这是当时真正使用的提示词。它不是先讲视觉风格，而是先把运行环境、一个输入、四种状态和共同的时钟写清楚。大家如果也想做一个简单练习，可以直接复制，再换掉声音和画面方向。">
+    <section class="slide" data-order="4" data-note="这是当时真正使用的提示词。它不是先讲视觉风格，而是先把运行环境、一个输入、四种状态和共同的时钟写清楚。大家如果也想做一个简单练习，可以直接复制，再换掉声音和画面方向。">
       <div class="inner">
         <p class="eyebrow">PROMPT 01</p><h2>第一个可运行版本的提示词</h2>
         <div class="prompt-layout">
@@ -267,7 +273,7 @@
       </div>
     </section>
 
-    <section class="slide" data-note="这里是提示词里几个技术词具体负责什么。不是一定要同时使用。声音如果需要节拍和音序，我会选 Tone.js；如果只做简单合成和频谱分析，Web Audio API 就够。二维反馈用 Canvas，三维粒子和空间镜头再用 Three.js 或 WebGL。">
+    <section class="slide" data-order="5" data-note="这里是提示词里几个技术词具体负责什么。不是一定要同时使用。声音如果需要节拍和音序，我会选 Tone.js；如果只做简单合成和频谱分析，Web Audio API 就够。二维反馈用 Canvas，三维粒子和空间镜头再用 Three.js 或 WebGL。">
       <div class="inner">
         <p class="eyebrow">TECH NOTES</p><h2>声音与视觉分别怎样实现</h2>
         <table class="spec-table">
@@ -282,7 +288,7 @@
       </div>
     </section>
 
-    <section class="slide" data-note="有了第一个版本以后，我不会再让 AI 笼统地优化全部内容，而是把试玩时发现的问题逐个发回去。这里放的是我真实会使用的三类修改方式：长按太重复、声音太乱、视觉只是跟着音量闪。">
+    <section class="slide" data-order="6" data-note="有了第一个版本以后，我不会再让 AI 笼统地优化全部内容，而是把试玩时发现的问题逐个发回去。这里放的是我真实会使用的三类修改方式：长按太重复、声音太乱、视觉只是跟着音量闪。">
       <div class="inner">
         <p class="eyebrow">REVISION LOG</p><h2>试玩以后，我继续修改了什么</h2>
         <div class="revision-list">
@@ -294,15 +300,13 @@
       </div>
     </section>
 
-    <section class="slide" data-note="这是我从小练习继续做下去的项目。不同文明面对的是同一片真实星空，但会形成不同的星图、故事和关系。我把恒星当作音序步骤，让位置、星等和连接关系影响演奏。左下可以切换快速版本和现在的版本。">
+    <section class="slide" data-order="8" data-note="这是我很快搭出来的星宿合成器原型。不同文明面对的是同一片真实星空，但会形成不同的星图、故事和关系。我先把恒星当作音序步骤，试着让位置、星等和连接关系影响演奏。这一页只展示当时的快速原型。">
       <div class="inner">
         <p class="eyebrow">CASE 02</p><h2>Stellar Synth｜星宿合成器</h2>
         <div class="stellar-layout">
           <div class="panel live-stage">
             <iframe id="stellarFrame" src="https://yangzi831.github.io/sky-cultures-instrument/" title="Stellar Synth 互动演示" allow="autoplay; fullscreen"></iframe>
             <div class="stage-actions">
-              <button class="switch-btn active" data-stellar-url="https://yangzi831.github.io/sky-cultures-instrument/">快速原型</button>
-              <button class="switch-btn" data-stellar-url="https://yangzi831.github.io/stellar-synth/atlas/?build=dfd530a">当前版本</button>
               <a class="link-btn" id="stellarOpen" href="https://yangzi831.github.io/sky-cultures-instrument/" target="_blank" rel="noopener">新窗口打开 ↗</a>
             </div>
           </div>
@@ -318,7 +322,7 @@
       </div>
     </section>
 
-    <section class="slide" data-note="这三个片段是我为乐队现场做的实时 VJ 研究。这里不跳转到作品站，页面里可以直接播放。我主要在试三种画面语言：粒子和频谱的关系、声音对网格的位移，以及轨道式的几何流动。">
+    <section class="slide" data-order="9" data-note="这三个片段是我为乐队现场做的实时 VJ 研究。这里不跳转到作品站，页面里可以直接播放。我主要在试三种画面语言：粒子和频谱的关系、声音对网格的位移，以及轨道式的几何流动。">
       <div class="inner">
         <p class="eyebrow">CASE 03 · LIVE VJ</p><h2>为乐队制作的实时 VJ</h2>
         <p class="video-intro">三个实时视觉片段。播放时可以直接比较粒子、网格和几何结构怎样回应声音。</p>
@@ -339,9 +343,27 @@
       </div>
     </section>
 
-    <section class="slide" data-note="这是我刚开始探索音画交互时录下的一段视频。那时还没有现在这么完整的状态和编曲结构，更多是在试声音、动作和实时画面能不能连起来。我把它留在这里，是想让大家看到这个项目不是一次生成出来的，而是从这些具体的小实验慢慢做下去的。">
+    <section class="slide" data-order="10" data-note="最后是我做过的一个声音和灯光交互装置。现场的灯光会读取声音的响度、频率和持续时长，再形成不同的亮度、颜色和延续变化。它和网页音画练习关注的是同一个问题，只是反馈从屏幕变成了真实空间里的光。">
       <div class="inner">
-        <p class="eyebrow">CASE 04 · EARLY STUDY</p><h2>早期的音画交互练习</h2>
+        <p class="eyebrow">SOUND × LIGHT INSTALLATION</p><h2>声音与灯光交互装置</h2>
+        <p class="video-intro">声音的响度、频率和持续时长，会进入不同的灯光响应。</p>
+        <div class="installation-grid">
+          <figure class="panel installation-figure">
+            <img src="media/sound-light-installation-live.jpg" alt="黑暗现场中被蓝紫灯光照亮的声音山体装置">
+            <figcaption>现场状态｜声音进入以后，山体与底部灯带同步变化</figcaption>
+          </figure>
+          <figure class="panel installation-figure">
+            <img src="media/sound-light-installation-detail.jpg" alt="电脑旁呈现蓝绿紫渐变灯光的声音山体装置">
+            <figcaption>装置细节｜声音输入、网页界面与实体灯光同时工作</figcaption>
+          </figure>
+        </div>
+        <div class="mapping-row"><span>响度 → 响应幅度</span><span>频率 → 灯光状态</span><span>持续时长 → 保持与衰减</span></div>
+      </div>
+    </section>
+
+    <section class="slide" data-order="2" data-note="这是我刚开始探索音画交互时录下的一段视频。那时还没有现在这么完整的状态和编曲结构，更多是在试声音、动作和实时画面能不能连起来。我把它留在这里，是想让大家看到这个项目不是一次生成出来的，而是从这些具体的小实验慢慢做下去的。">
+      <div class="inner">
+        <p class="eyebrow">EARLY STUDY</p><h2>早期的音画交互练习</h2>
         <div class="single-video">
           <div class="panel single-video-stage">
             <video controls playsinline preload="metadata"><source src="media/early-av-exploration.mp4" type="video/mp4"></video>
@@ -356,7 +378,7 @@
       </div>
     </section>
 
-    <section class="slide" data-note="最后这些链接都可以直接进去玩。点击左侧名称会在右侧打开；如果外站不允许内嵌，就点右上角的新窗口打开。它们也是我做音画网页时会看的交互和视觉参考。">
+    <section class="slide" data-order="7" data-note="这些链接都可以直接进去玩。点击左侧名称会在右侧打开；如果外站不允许内嵌，就点右上角的新窗口打开。它们也是我做音画网页时会看的交互和视觉参考。">
       <div class="inner">
         <p class="eyebrow">PLAYABLE LINKS</p><h2>可以直接试玩的音画网页</h2>
         <div class="lab-layout">
@@ -380,6 +402,7 @@
   <div class="notes" id="notes"><strong>现场提词</strong><p id="noteText"></p></div>
   <div class="footer-help">↑ ↓ 翻页　SPACE 演奏　N 提词　T 计时</div>
   <script>
+    const main=document.querySelector('main');[...document.querySelectorAll('.slide')].sort((a,b)=>Number(a.dataset.order)-Number(b.dataset.order)).forEach(slide=>main.appendChild(slide));
     const slides=[...document.querySelectorAll('.slide')],count=document.getElementById('count'),progress=document.getElementById('progress'),dots=document.getElementById('dots'),notes=document.getElementById('notes'),noteText=document.getElementById('noteText');
     let current=0;
     slides.forEach((_,i)=>{const b=document.createElement('button');b.className='dot'+(i===0?' active':'');b.type='button';b.setAttribute('aria-label',`第 ${i+1} 页`);b.onclick=()=>show(i);dots.appendChild(b)});
@@ -387,7 +410,6 @@
     show(0);
     document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;if(['ArrowDown','ArrowRight','PageDown'].includes(e.key)){e.preventDefault();show(current+1)}if(['ArrowUp','ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(current-1)}if(e.key.toLowerCase()==='n')notes.classList.toggle('show');if(e.key.toLowerCase()==='t')toggleTimer()});
     document.getElementById('copyPrompt').addEventListener('click',async e=>{const text=document.getElementById('promptText').innerText;try{await navigator.clipboard.writeText(text);e.currentTarget.textContent='已复制'}catch{e.currentTarget.textContent='请手动复制'}setTimeout(()=>e.currentTarget.textContent='复制这段提示词',1600)});
-    document.querySelectorAll('[data-stellar-url]').forEach(btn=>btn.addEventListener('click',()=>{const url=btn.dataset.stellarUrl;document.getElementById('stellarFrame').src=url;document.getElementById('stellarOpen').href=url;document.querySelectorAll('[data-stellar-url]').forEach(x=>x.classList.toggle('active',x===btn))}));
     document.querySelectorAll('[data-demo-url]').forEach(btn=>btn.addEventListener('click',()=>{const url=btn.dataset.demoUrl;document.getElementById('demoFrame').src=url;document.getElementById('demoOpen').href=url;document.querySelectorAll('[data-demo-url]').forEach(x=>x.classList.toggle('active',x===btn))}));
     document.querySelectorAll('video').forEach(video=>video.addEventListener('play',()=>document.querySelectorAll('video').forEach(other=>{if(other!==video)other.pause()})));
     let timerOn=false,timerLeft=300,timerHandle=null;const timerEl=document.getElementById('timer');function renderTimer(){timerEl.textContent=`${String(Math.floor(timerLeft/60)).padStart(2,'0')}:${String(timerLeft%60).padStart(2,'0')}`}function toggleTimer(){timerOn=!timerOn;if(timerOn){timerHandle=setInterval(()=>{timerLeft=Math.max(0,timerLeft-1);renderTimer();if(timerLeft===0){clearInterval(timerHandle);timerOn=false}},1000)}else clearInterval(timerHandle)}timerEl.onclick=toggleTimer;renderTimer();
