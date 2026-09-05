@@ -157,6 +157,18 @@
     .layer:first-of-type{margin-top:18px}
     .layer b{display:block;color:#e8f0f8;font-size:15px;margin-bottom:6px}
     .layer span{color:var(--muted);font-size:14px;line-height:1.65}
+    .video-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:26px}
+    .video-card{overflow:hidden;padding:8px}
+    .video-card video{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border:0;border-radius:15px;background:#02040a}
+    .video-caption{padding:16px 13px 12px}
+    .video-caption h3{margin:0 0 5px;font-size:17px;line-height:1.45}
+    .video-caption p{margin:0;font-size:13px;line-height:1.65;color:var(--dim)}
+    .video-intro{max-width:920px;margin-bottom:0}
+    .single-video{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(310px,.65fr);gap:28px;align-items:center;margin-top:26px}
+    .single-video-stage{overflow:hidden;padding:8px}
+    .single-video-stage video{display:block;width:100%;max-height:68vh;aspect-ratio:2/1;object-fit:contain;border-radius:15px;background:#02040a}
+    .single-video-copy{padding:28px}
+    .single-video-copy p{font-size:15px;line-height:1.85}
     .lab-layout{display:grid;grid-template-columns:285px minmax(0,1fr);gap:20px;align-items:stretch}
     .lab-nav{padding:14px;display:flex;flex-direction:column;gap:7px}
     .lab-item{border:0;border-radius:11px;background:transparent;padding:14px;text-align:left;color:#aebdcd;line-height:1.45}
@@ -175,9 +187,9 @@
     .dot{width:8px;height:8px;padding:0;border:1px solid rgba(190,219,238,.42);border-radius:50%;background:transparent}
     .dot.active{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 13px var(--cyan)}
     @media(max-width:1050px){
-      .intro-grid,.case-grid,.prompt-layout,.stellar-layout{grid-template-columns:1fr}
+      .intro-grid,.case-grid,.prompt-layout,.stellar-layout,.single-video{grid-template-columns:1fr}
       .intro-visual{height:360px}.demo-frame{min-height:520px}.demo-frame iframe{min-height:504px}
-      .revision-list{grid-template-columns:1fr}.lab-layout{grid-template-columns:1fr}.lab-nav{display:grid;grid-template-columns:repeat(2,1fr)}
+      .revision-list{grid-template-columns:1fr}.video-grid{grid-template-columns:1fr 1fr}.lab-layout{grid-template-columns:1fr}.lab-nav{display:grid;grid-template-columns:repeat(2,1fr)}
       .slide{align-items:flex-start}.live-stage iframe{height:520px}.lab-stage iframe{height:540px}
     }
     @media(max-width:680px){
@@ -185,7 +197,7 @@
       h1{font-size:35px}h2{font-size:28px}.lead{font-size:17px}.intro-grid{gap:26px}.intro-visual{height:300px}
       .case-grid{gap:20px}.demo-frame{min-height:440px}.demo-frame iframe{min-height:424px}.prompt-box{padding:22px;max-height:none}
       .spec-table th,.spec-table td{display:block;width:100%;padding:14px 17px}.spec-table th{border-bottom:0;padding-bottom:3px}
-      .lab-nav{grid-template-columns:1fr}.dots{display:none}.live-stage iframe{height:460px}.lab-stage iframe{height:480px}
+      .video-grid{grid-template-columns:1fr}.single-video-copy{padding:22px}.lab-nav{grid-template-columns:1fr}.dots{display:none}.live-stage iframe{height:460px}.lab-stage iframe{height:480px}
     }
     @media(prefers-reduced-motion:reduce){.aurora::before,.aurora::after,.orbit{animation:none}.slide.active{animation:none}}
   </style>
@@ -194,7 +206,7 @@
   <canvas id="space" aria-hidden="true"></canvas><div class="aurora" aria-hidden="true"></div><div class="grain" aria-hidden="true"></div>
   <header class="topbar">
     <div class="brand"><i></i>小翅膀 <span>音画网页原型案例分享</span></div>
-    <div class="top-right"><span id="count">01 / 07</span><button class="timer" id="timer" type="button" aria-label="开始五分钟计时">05:00</button></div>
+    <div class="top-right"><span id="count">01 / 09</span><button class="timer" id="timer" type="button" aria-label="开始五分钟计时">05:00</button></div>
   </header>
   <div class="progress" id="progress"></div>
   <main>
@@ -287,11 +299,11 @@
         <p class="eyebrow">CASE 02</p><h2>Stellar Synth｜星宿合成器</h2>
         <div class="stellar-layout">
           <div class="panel live-stage">
-            <iframe id="stellarFrame" src="https://yangzi831.github.io/stellar-synth/atlas/?build=dfd530a" title="Stellar Synth 互动演示" allow="autoplay; fullscreen"></iframe>
+            <iframe id="stellarFrame" src="https://yangzi831.github.io/sky-cultures-instrument/" title="Stellar Synth 互动演示" allow="autoplay; fullscreen"></iframe>
             <div class="stage-actions">
-              <button class="switch-btn active" data-stellar-url="https://yangzi831.github.io/stellar-synth/atlas/?build=dfd530a">当前版本</button>
-              <button class="switch-btn" data-stellar-url="https://yangzi831.github.io/sky-cultures-instrument/">快速原型</button>
-              <a class="link-btn" id="stellarOpen" href="https://yangzi831.github.io/stellar-synth/atlas/?build=dfd530a" target="_blank" rel="noopener">新窗口打开 ↗</a>
+              <button class="switch-btn active" data-stellar-url="https://yangzi831.github.io/sky-cultures-instrument/">快速原型</button>
+              <button class="switch-btn" data-stellar-url="https://yangzi831.github.io/stellar-synth/atlas/?build=dfd530a">当前版本</button>
+              <a class="link-btn" id="stellarOpen" href="https://yangzi831.github.io/sky-cultures-instrument/" target="_blank" rel="noopener">新窗口打开 ↗</a>
             </div>
           </div>
           <aside class="panel stellar-copy">
@@ -301,6 +313,44 @@
             <div class="layer"><b>不同文明的音乐设置</b><span>继续整理各自的音阶、节奏、乐器音色和演奏装饰，避免只贴“民族风格”标签。</span></div>
             <div class="layer"><b>统一的编曲框架</b><span>准备放进 Melodic Techno 的 BPM、Kick / Bass、8 或 16 小节乐句与能量推进中。</span></div>
             <p class="small">目前：星图、交互与视觉已经可以体验；文明音乐语汇和完整编曲仍在继续制作。</p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-note="这三个片段是我为乐队现场做的实时 VJ 研究。这里不跳转到作品站，页面里可以直接播放。我主要在试三种画面语言：粒子和频谱的关系、声音对网格的位移，以及轨道式的几何流动。">
+      <div class="inner">
+        <p class="eyebrow">CASE 03 · LIVE VJ</p><h2>为乐队制作的实时 VJ</h2>
+        <p class="video-intro">三个实时视觉片段。播放时可以直接比较粒子、网格和几何结构怎样回应声音。</p>
+        <div class="video-grid">
+          <article class="panel video-card">
+            <video controls playsinline preload="metadata" poster="https://av03-vj-studies-yangzi.yzi763343.chatgpt.site/posters/orbital-resonance.png"><source src="https://av03-vj-studies-yangzi.yzi763343.chatgpt.site/videos/orbital-resonance.mp4" type="video/mp4"></video>
+            <div class="video-caption"><h3>Orbital Resonance</h3><p>粒子系统 · 频谱响应 · 01:09</p></div>
+          </article>
+          <article class="panel video-card">
+            <video controls playsinline preload="metadata" poster="https://av03-vj-studies-yangzi.yzi763343.chatgpt.site/posters/gravitational-field.png"><source src="https://av03-vj-studies-yangzi.yzi763343.chatgpt.site/videos/gravitational-field.mp4" type="video/mp4"></video>
+            <div class="video-caption"><h3>Gravitational Field</h3><p>波形网格 · 音频位移 · 00:47</p></div>
+          </article>
+          <article class="panel video-card">
+            <video controls playsinline preload="metadata" poster="https://av03-vj-studies-yangzi.yzi763343.chatgpt.site/posters/eclipse-engine.png"><source src="https://av03-vj-studies-yangzi.yzi763343.chatgpt.site/videos/eclipse-engine.mp4" type="video/mp4"></video>
+            <div class="video-caption"><h3>Eclipse Engine</h3><p>轨道流动 · 响应式几何 · 00:26</p></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-note="这是我刚开始探索音画交互时录下的一段视频。那时还没有现在这么完整的状态和编曲结构，更多是在试声音、动作和实时画面能不能连起来。我把它留在这里，是想让大家看到这个项目不是一次生成出来的，而是从这些具体的小实验慢慢做下去的。">
+      <div class="inner">
+        <p class="eyebrow">CASE 04 · EARLY STUDY</p><h2>早期的音画交互练习</h2>
+        <div class="single-video">
+          <div class="panel single-video-stage">
+            <video controls playsinline preload="metadata"><source src="media/early-av-exploration.mp4" type="video/mp4"></video>
+          </div>
+          <aside class="panel single-video-copy">
+            <h3>刚开始时，我在试什么</h3>
+            <p>把声音、手上的操作和实时画面放到同一个练习里，先看三者之间有没有明确的反馈关系。</p>
+            <p>这段是早期录屏。后面再做一个按钮和星宿合成器时，我才继续加入 Tap / Hold / Release、共享节拍和更完整的状态变化。</p>
+            <p class="small">视频时长 02:20 · 可在本页直接播放</p>
           </aside>
         </div>
       </div>
@@ -333,12 +383,13 @@
     const slides=[...document.querySelectorAll('.slide')],count=document.getElementById('count'),progress=document.getElementById('progress'),dots=document.getElementById('dots'),notes=document.getElementById('notes'),noteText=document.getElementById('noteText');
     let current=0;
     slides.forEach((_,i)=>{const b=document.createElement('button');b.className='dot'+(i===0?' active':'');b.type='button';b.setAttribute('aria-label',`第 ${i+1} 页`);b.onclick=()=>show(i);dots.appendChild(b)});
-    function show(i){current=Math.max(0,Math.min(slides.length-1,i));slides.forEach((s,n)=>s.classList.toggle('active',n===current));[...dots.children].forEach((d,n)=>d.classList.toggle('active',n===current));count.textContent=`${String(current+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}`;progress.style.width=`${(current+1)/slides.length*100}%`;noteText.textContent=slides[current].dataset.note||'';window.scrollTo(0,0)}
+    function show(i){current=Math.max(0,Math.min(slides.length-1,i));slides.forEach((s,n)=>s.classList.toggle('active',n===current));document.querySelectorAll('video').forEach(v=>{if(!slides[current].contains(v))v.pause()});[...dots.children].forEach((d,n)=>d.classList.toggle('active',n===current));count.textContent=`${String(current+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}`;progress.style.width=`${(current+1)/slides.length*100}%`;noteText.textContent=slides[current].dataset.note||'';window.scrollTo(0,0)}
     show(0);
     document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;if(['ArrowDown','ArrowRight','PageDown'].includes(e.key)){e.preventDefault();show(current+1)}if(['ArrowUp','ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(current-1)}if(e.key.toLowerCase()==='n')notes.classList.toggle('show');if(e.key.toLowerCase()==='t')toggleTimer()});
     document.getElementById('copyPrompt').addEventListener('click',async e=>{const text=document.getElementById('promptText').innerText;try{await navigator.clipboard.writeText(text);e.currentTarget.textContent='已复制'}catch{e.currentTarget.textContent='请手动复制'}setTimeout(()=>e.currentTarget.textContent='复制这段提示词',1600)});
     document.querySelectorAll('[data-stellar-url]').forEach(btn=>btn.addEventListener('click',()=>{const url=btn.dataset.stellarUrl;document.getElementById('stellarFrame').src=url;document.getElementById('stellarOpen').href=url;document.querySelectorAll('[data-stellar-url]').forEach(x=>x.classList.toggle('active',x===btn))}));
     document.querySelectorAll('[data-demo-url]').forEach(btn=>btn.addEventListener('click',()=>{const url=btn.dataset.demoUrl;document.getElementById('demoFrame').src=url;document.getElementById('demoOpen').href=url;document.querySelectorAll('[data-demo-url]').forEach(x=>x.classList.toggle('active',x===btn))}));
+    document.querySelectorAll('video').forEach(video=>video.addEventListener('play',()=>document.querySelectorAll('video').forEach(other=>{if(other!==video)other.pause()})));
     let timerOn=false,timerLeft=300,timerHandle=null;const timerEl=document.getElementById('timer');function renderTimer(){timerEl.textContent=`${String(Math.floor(timerLeft/60)).padStart(2,'0')}:${String(timerLeft%60).padStart(2,'0')}`}function toggleTimer(){timerOn=!timerOn;if(timerOn){timerHandle=setInterval(()=>{timerLeft=Math.max(0,timerLeft-1);renderTimer();if(timerLeft===0){clearInterval(timerHandle);timerOn=false}},1000)}else clearInterval(timerHandle)}timerEl.onclick=toggleTimer;renderTimer();
     const canvas=document.getElementById('space'),ctx=canvas.getContext('2d');
     let particles=[],nodes=[],w=0,h=0,dpr=1,pointer={x:.5,y:.5};
